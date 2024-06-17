@@ -415,6 +415,9 @@ class ServiceInstanceManager(object):
         """Deletes the server."""
         try:
             self.compute_api.server_get(context, server_id)
+            attached_volumes = [vol.id for vol in
+                                    self.compute_api.instance_volumes_list(
+                                        context, server_id)]
         except exception.InstanceNotFound:
             LOG.debug("Service instance '%s' was not found. "
                       "Nothing to delete, skipping.", server_id)
@@ -431,6 +434,8 @@ class ServiceInstanceManager(object):
                               "successfully.", server_id)
                     break
             except exception.InstanceNotFound:
+                for volume in attached_volumes:
+                    self.volume_api.delete(context, volume)
                 LOG.debug("Service instance '%s' was deleted "
                           "successfully.", server_id)
                 break
